@@ -1,16 +1,14 @@
 package ru.evg.mask_logback.controllers;
 
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.evg.mask_logback.models.Order;
-import ru.evg.mask_logback.models.User;
+import ru.evg.mask_logback.model.Order;
+import ru.evg.mask_logback.model.User;
 
-import java.util.Arrays;
-import java.util.HashMap;
+
 import java.util.List;
-import java.util.Map;
+
 
 import static ru.evg.mask_logback.utils.LoggerUtil.toJson;
 
@@ -23,8 +21,8 @@ public class Controller {
         Order order = new Order();
         order.setId("test");
         order.setType("test");
-        order.setUsers(List.of(new User("Каво", "Рыцари", "Главарь", "1234", "56789"),
-                new User("Деда", "не извиняются", "перед рыцарем", "9874", "314234")));
+        order.setUser(List.of(new User().name("User 1").login("user1").post("post1").number("12345678").series("4321"),
+                new User().name("User 2").login("user2").post("post2").number("87654321").series("1234")));
 
         log.info("Ответ: {}", toJson(order));
         return order;

@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: Title
+  description: Title
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:8080/'
+paths: {}
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        name:
+          type: string
+        login:
+          type: string
+        post:
+          type: string
+        series:
+          type: string
+        number:
+          type: string
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        user:
+          items:
+            $ref: "#/components/schemas/User"
