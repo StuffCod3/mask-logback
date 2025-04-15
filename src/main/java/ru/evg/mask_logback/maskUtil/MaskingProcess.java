@@ -21,7 +21,7 @@ public class MaskingProcess {
 
     private void maskFields(Object object) {
         // Если объект примитив, его обёртка или String – не обрабатываем
-        if (object == null || ClassUtils.isPrimitiveOrWrapper(object.getClass()) || object instanceof String) {
+        if (object == null || ClassUtils.isPrimitiveOrWrapper(object.getClass()) || object instanceof String || object instanceof Number) {
             return;
         }
 
