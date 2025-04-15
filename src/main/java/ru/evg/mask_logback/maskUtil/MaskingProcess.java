@@ -7,7 +7,9 @@ import ru.evg.mask_logback.maskUtil.finder.MaskingField;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.Collection;
+import java.net.URI;
+import java.net.URL;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -15,41 +17,48 @@ public class MaskingProcess {
 
     public void generatePatternsFromFields(Object object) {
         if (object != null) {
-            maskFields(object);
+            maskFields(object, new HashSet<>());
         }
     }
 
-    private void maskFields(Object object) {
-        // Если объект примитив, его обёртка или String – не обрабатываем
-        if (object == null || ClassUtils.isPrimitiveOrWrapper(object.getClass()) || object instanceof String || object instanceof Number) {
+    private void maskFields(Object object, Set<Object> visited) {
+        if (object == null ||
+                visited.contains(object) ||
+                ClassUtils.isPrimitiveOrWrapper(object.getClass()) ||
+                object instanceof String ||
+                object instanceof Number ||
+                object instanceof Enum ||
+                object instanceof java.util.Date ||
+                object instanceof java.time.temporal.Temporal ||
+                object instanceof UUID ||
+                object instanceof URL ||
+                object instanceof URI ||
+                object.getClass().getName().startsWith("java.lang.reflect.") ||
+                object.getClass().getName().startsWith("java.util.") && !(object instanceof Collection || object instanceof Map)) {
             return;
         }
+        visited.add(object);
 
-        // Если объект является коллекцией, обрабатываем каждый элемент
         if (object instanceof Collection) {
             for (Object item : (Collection<?>) object) {
-                maskFields(item);
+                maskFields(item, visited);
             }
             return;
         }
 
-        // Если объект — массив, обрабатываем каждый его элемент
         if (object.getClass().isArray()) {
             int length = Array.getLength(object);
             for (int i = 0; i < length; i++) {
                 Object item = Array.get(object, i);
-                maskFields(item);
+                maskFields(item, visited);
             }
             return;
         }
 
-        // Обрабатываем поля объекта
         Field[] fields = object.getClass().getDeclaredFields();
         for (Field field : fields) {
-            // Обязательно устанавливаем доступ только к тем полям, которые объявлены в нашем классе
             field.setAccessible(true);
             try {
-                // Если поле аннотировано @MaskingField и его значение является строкой, маскируем значение
                 if (field.isAnnotationPresent(MaskingField.class)) {
                     Object value = field.get(object);
                     if (value instanceof String) {
@@ -57,10 +66,9 @@ public class MaskingProcess {
                         field.set(object, maskedValue);
                     }
                 }
-                // Рекурсивно обрабатываем значение поля, если оно не является примитивом/обёрткой/String
                 Object fieldValue = field.get(object);
                 if (fieldValue != null) {
-                    maskFields(fieldValue);
+                    maskFields(fieldValue, visited);
                 }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
