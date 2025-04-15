@@ -20,11 +20,12 @@ public class MaskingProcess {
     }
 
     private void maskFields(Object object) {
-        if (object == null) {
+        // Если объект примитив, его обёртка или String – не обрабатываем
+        if (object == null || ClassUtils.isPrimitiveOrWrapper(object.getClass()) || object instanceof String) {
             return;
         }
 
-        // Если объект является коллекцией, обрабатываем каждый элемент.
+        // Если объект является коллекцией, обрабатываем каждый элемент
         if (object instanceof Collection) {
             for (Object item : (Collection<?>) object) {
                 maskFields(item);
@@ -32,7 +33,7 @@ public class MaskingProcess {
             return;
         }
 
-        // Если объект — массив, обрабатываем каждый элемент массива.
+        // Если объект — массив, обрабатываем каждый его элемент
         if (object.getClass().isArray()) {
             int length = Array.getLength(object);
             for (int i = 0; i < length; i++) {
@@ -42,12 +43,13 @@ public class MaskingProcess {
             return;
         }
 
-        // Обработка полей объекта
+        // Обрабатываем поля объекта
         Field[] fields = object.getClass().getDeclaredFields();
         for (Field field : fields) {
+            // Обязательно устанавливаем доступ только к тем полям, которые объявлены в нашем классе
             field.setAccessible(true);
             try {
-                // Если поле аннотировано @MaskingField и является String, то применяем маскировку.
+                // Если поле аннотировано @MaskingField и его значение является строкой, маскируем значение
                 if (field.isAnnotationPresent(MaskingField.class)) {
                     Object value = field.get(object);
                     if (value instanceof String) {
@@ -55,11 +57,9 @@ public class MaskingProcess {
                         field.set(object, maskedValue);
                     }
                 }
-                // Если поле не String и не примитивный тип, пытаемся рекурсивно обработать его значение.
+                // Рекурсивно обрабатываем значение поля, если оно не является примитивом/обёрткой/String
                 Object fieldValue = field.get(object);
-                if (fieldValue != null &&
-                        !(fieldValue instanceof String) &&
-                        !ClassUtils.isPrimitiveOrWrapper(fieldValue.getClass())) {
+                if (fieldValue != null) {
                     maskFields(fieldValue);
                 }
             } catch (IllegalAccessException e) {

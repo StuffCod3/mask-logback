@@ -30,6 +30,10 @@ components:
     Order:
       type: object
       properties:
+        bisId:
+          type: array
+          items:
+            type: string
         id:
           type: string
         type:
@@ -38,3 +42,10 @@ components:
         user:
           items:
             $ref: "#/components/schemas/User"
+    OrderResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
