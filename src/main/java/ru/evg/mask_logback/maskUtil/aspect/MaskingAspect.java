@@ -26,16 +26,8 @@ public class MaskingAspect {
         Object originalCopy = objectMapper.readValue(objectMapper.writeValueAsString(obj), obj.getClass());
         maskingProcess.generatePatternsFromFields(obj);
         String maskedJson = (String) joinPoint.proceed(new Object[]{obj});
-        restoreObject(obj, originalCopy);
+        BeanUtils.copyProperties(originalCopy, obj);
         return maskedJson;
-    }
-
-    private void restoreObject(Object target, Object source) throws IllegalAccessException {
-        for (Field field : target.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            field.set(target, field.get(source));
-            field.setAccessible(false);
-        }
     }
 
 }
