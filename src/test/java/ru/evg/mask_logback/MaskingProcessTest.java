@@ -1,9 +1,14 @@
-package ru.evg.mask_logback.controllers;
+package ru.evg.mask_logback;
 
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootContextLoader;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import ru.evg.mask_logback.maskUtil.MaskingProcess;
+import ru.evg.mask_logback.maskUtil.aspect.MaskingAspect;
 import ru.evg.mask_logback.model.Employee;
 import ru.evg.mask_logback.model.Passport;
 import ru.evg.mask_logback.model.Response;
@@ -16,21 +21,50 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static ru.evg.mask_logback.utils.LoggerUtil.toJson;
 
 @Slf4j
-@RestController
-@RequiredArgsConstructor
-public class Controller {
+@SpringBootTest
+public class MaskingProcessTest extends SpringBootContextLoader {
 
-    private final JsonUtilWrapper jsonUtilWrapper;
+    @Autowired
+    private MaskingProcess maskingProcess;
 
-    @GetMapping("/test")
-    public Response test(){
-        Response response = mockResponse(List.of(mockFirstEmployee(), mockSecondEmployee(), mockThirdEmployee()));
-        log.info("Ответ: {}", toJson(response));
-        return response;
+    @Autowired
+    private JsonUtilWrapper jsonUtilWrapper;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test
+    void test(){
+        Response response = mockResponse(List.of(mockFirstEmployee()));
+        assertThatCode(() -> maskingProcess.maskFields(response)).doesNotThrowAnyException();
     }
+
+    @Test
+    void test2(){
+        Response response = mockResponse(List.of(mockFirstEmployee(), mockSecondEmployee(), mockThirdEmployee()));
+        assertThatCode(() -> maskingProcess.maskFields(response)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void test3(){
+        Response response = mockResponse(List.of(mockFirstEmployee(), mockSecondEmployee(), mockThirdEmployee()));
+        String originalJson = toJson(response);
+        String maskedJson = jsonUtilWrapper.toJson(response);
+
+        log.info("Исходный JSON: {}", originalJson);
+        log.info("Маскированный JSON: {}", maskedJson);
+
+        Employee employee = response.getEmployee().get(0);
+        String login = employee.getLogin() != null ? employee.getLogin() : "";
+
+        assertThat(maskedJson).contains("*".repeat(login.length()));
+    }
+
     private Response mockResponse(List<Employee> employees){
         return new Response().id(UUID.randomUUID()).employee(employees);
     }

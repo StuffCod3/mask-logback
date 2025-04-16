@@ -9,43 +9,48 @@ paths: {}
 
 components:
   schemas:
-    User:
+    Response:
       type: object
       properties:
-        name:
-          type: string
-          x-field-extra-annotation: "@ru.evg.mask_logback.maskUtil.finder.MaskingField"
+        id:
+          type: UUID
+        employee:
+          type: array
+          items:
+            $ref: "#/components/schemas/Employee"
+    Employee:
+      type: object
+      properties:
+        id:
+          type: UUID
         login:
           type: string
           x-field-extra-annotation: "@ru.evg.mask_logback.maskUtil.finder.MaskingField"
-        post:
+        lastActive:
           type: string
-          x-field-extra-annotation: "@ru.evg.mask_logback.maskUtil.finder.MaskingField"
+          format: date-time
+        passport:
+          $ref: '#/components/schemas/Passport'
+    Passport:
+      type: object
+      properties:
         series:
-          type: string
+          type: number
           x-field-extra-annotation: "@ru.evg.mask_logback.maskUtil.finder.MaskingField"
         number:
-          type: string
+          type: number
           x-field-extra-annotation: "@ru.evg.mask_logback.maskUtil.finder.MaskingField"
-    Order:
-      type: object
-      properties:
-        bisId:
-          type: array
-          items:
-            type: string
-        id:
+        birthDate:
           type: string
-        type:
-          type: string
+          format: date
           x-field-extra-annotation: "@ru.evg.mask_logback.maskUtil.finder.MaskingField"
-        user:
-          items:
-            $ref: "#/components/schemas/User"
-    OrderResponse:
-      type: object
-      properties:
-        orders:
-          type: array
-          items:
-            $ref: "#/components/schemas/Order"
+        sex:
+          $ref: '#/components/schemas/Sex'
+        placeOfIssue:
+          type: string
+    Sex:
+      type: string
+      enum:
+        - MALE
+        - FEMALE
+      x-field-extra-annotation: "@ru.evg.mask_logback.maskUtil.finder.MaskingField"

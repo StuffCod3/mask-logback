@@ -1,5 +1,6 @@
 package ru.evg.mask_logback.maskUtil;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ClassUtils;
 import org.springframework.stereotype.Component;
@@ -15,66 +16,71 @@ import java.util.*;
 @RequiredArgsConstructor
 public class MaskingProcess {
 
-    public void generatePatternsFromFields(Object object) {
-        if (object != null) {
-            maskFields(object, new HashSet<>());
+    public String maskFields(Object obj) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            Object maskedObject = processObject(obj);
+            return objectMapper.writeValueAsString(maskedObject);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert to JSON", e);
         }
     }
 
-    private void maskFields(Object object, Set<Object> visited) {
-        if (object == null ||
-                visited.contains(object) ||
-                ClassUtils.isPrimitiveOrWrapper(object.getClass()) ||
-                object instanceof String ||
-                object instanceof Number ||
-                object instanceof Enum ||
-                object instanceof java.util.Date ||
-                object instanceof java.time.temporal.Temporal ||
-                object instanceof UUID ||
-                object instanceof URL ||
-                object instanceof URI ||
-                object.getClass().getName().startsWith("java.lang.reflect.") ||
-                object.getClass().getName().startsWith("java.util.") && !(object instanceof Collection || object instanceof Map)) {
-            return;
+    private Object processObject(Object obj) throws IllegalAccessException {
+        if (obj == null) {
+            return null;
         }
-        visited.add(object);
 
-        if (object instanceof Collection) {
-            for (Object item : (Collection<?>) object) {
-                maskFields(item, visited);
+        if (obj instanceof Number || obj instanceof Boolean || obj instanceof Character) {
+            return obj;
+        }
+
+        if (obj instanceof String) {
+            return obj;
+        }
+
+        if (obj instanceof Collection) {
+            Collection<?> collection = (Collection<?>) obj;
+            List<Object> result = new ArrayList<>();
+            for (Object item : collection) {
+                result.add(processObject(item));
             }
-            return;
+            return result;
         }
 
-        if (object.getClass().isArray()) {
-            int length = Array.getLength(object);
-            for (int i = 0; i < length; i++) {
-                Object item = Array.get(object, i);
-                maskFields(item, visited);
+        if (obj.getClass().isArray()) {
+            Object[] array = (Object[]) obj;
+            Object[] result = new Object[array.length];
+            for (int i = 0; i < array.length; i++) {
+                result[i] = processObject(array[i]);
             }
-            return;
+            return result;
         }
 
-        Field[] fields = object.getClass().getDeclaredFields();
+        if (obj instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) obj;
+            Map<Object, Object> result = new HashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                result.put(processObject(entry.getKey()), processObject(entry.getValue()));
+            }
+            return result;
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        Field[] fields = obj.getClass().getDeclaredFields();
+
         for (Field field : fields) {
             field.setAccessible(true);
-            try {
-                if (field.isAnnotationPresent(MaskingField.class)) {
-                    Object value = field.get(object);
-                    if (value instanceof String) {
-                        String maskedValue = "*".repeat(value.toString().length());
-                        field.set(object, maskedValue);
-                    }
-                }
-                Object fieldValue = field.get(object);
-                if (fieldValue != null) {
-                    maskFields(fieldValue, visited);
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } finally {
-                field.setAccessible(false);
+            String fieldName = field.getName();
+            String fieldValue = field.get(obj).toString();
+
+            if (field.isAnnotationPresent(MaskingField.class) && fieldValue != null) {
+                fieldValue = "*".repeat(fieldValue.length());
             }
+
+            result.put(fieldName, fieldValue);
         }
+
+        return result;
     }
 }

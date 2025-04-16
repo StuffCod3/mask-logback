@@ -22,12 +22,8 @@ public class MaskingAspect {
     private final ObjectMapper objectMapper;
 
     @Around("execution(public String ru.evg.mask_logback.utils.JsonUtilWrapper.toJson(*)) && args(obj)")
-    public Object toJsonAspect(ProceedingJoinPoint joinPoint, Object obj) throws Throwable {
-        Object originalCopy = objectMapper.readValue(objectMapper.writeValueAsString(obj), obj.getClass());
-        maskingProcess.generatePatternsFromFields(obj);
-        String maskedJson = (String) joinPoint.proceed(new Object[]{obj});
-        BeanUtils.copyProperties(originalCopy, obj);
-        return maskedJson;
+    public void toJsonAspect(ProceedingJoinPoint joinPoint, Object obj) throws Throwable {
+
     }
 
 }
