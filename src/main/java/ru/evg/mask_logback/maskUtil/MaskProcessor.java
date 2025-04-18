@@ -59,6 +59,8 @@ public class MaskProcessor {
                         objectNode.put(fieldName, "*".repeat(fieldValue.asText().length()));
                     } else if (fieldValue.isNumber()) {
                         objectNode.put(fieldName, "*".repeat(fieldValue.toString().length()));
+                    } else if (fieldValue.isNull()) {
+                        objectNode.put(fieldName, "null");
                     } else {
                         objectNode.put(fieldName, "****");
                     }
@@ -96,7 +98,7 @@ public class MaskProcessor {
                 log.info("Проверяем поле {}", fieldName);
 
                 if (field.isAnnotationPresent(MaskingField.class) && isPrimitiveAndOtherType(fieldValue)) {
-                    annotationFields.put(fieldName, fieldValue);
+                    annotationFields.put(fieldName, fieldValue == null ? "null" : fieldValue);
                 }
                 // Вложенный объект
                 else if (fieldValue != null) {
@@ -122,15 +124,10 @@ public class MaskProcessor {
         return annotationFields;
     }
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private boolean isPrimitiveAndOtherType(Object object){
-        return ClassUtils.isPrimitiveOrWrapper(object.getClass()) ||
+        return object == null || ClassUtils.isPrimitiveOrWrapper(object.getClass()) ||
                 object instanceof String ||
                 object instanceof Number ||
                 object instanceof Enum ||

@@ -28,8 +28,7 @@ public class Controller {
     @GetMapping("/test")
     public Response test(){
         Response response = mockResponse(List.of(mockFirstEmployee(), mockSecondEmployee(), mockThirdEmployee()));
-        log.info("Ответ: {}", mask.mask(response));
-
+        log.info("Ответ: {}", jsonUtilWrapper.toJson(response));
         return response;
     }
     private Response mockResponse(List<Employee> employees){
@@ -40,7 +39,7 @@ public class Controller {
         Employee employee = new Employee().id(UUID.randomUUID());
         Passport passport = new Passport();
 
-        passport.series(BigDecimal.valueOf(1234));
+        passport.series(null);
         passport.number(BigDecimal.valueOf(987654321));
         passport.birthDate(LocalDate.now());
         passport.sex(Sex.MALE);
