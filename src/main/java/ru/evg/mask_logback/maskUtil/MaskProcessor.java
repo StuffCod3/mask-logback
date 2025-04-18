@@ -21,13 +21,15 @@ import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
+import static ru.evg.mask_logback.utils.LoggerUtil.toJson;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class MaskProcessor {
 
     public String mask(Object object) {
-        String jsonObject = formatObjectToJson(object);
+        String jsonObject = toJson(object);
         Map<String, Object> annotationFields = findAnnotationFields(object);
 
         try {
@@ -119,15 +121,6 @@ public class MaskProcessor {
 
         return annotationFields;
     }
-
-    private String formatObjectToJson(Object object){
-       try {
-           return Optional.ofNullable(new GsonBuilder().serializeNulls().setPrettyPrinting().create()
-                   .toJson(JsonParser.parseString(objectMapper.writeValueAsString(object)))).orElse("Пусто");
-       } catch (Exception e) {
-           return Objects.toString(object);
-       }
-   }
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
