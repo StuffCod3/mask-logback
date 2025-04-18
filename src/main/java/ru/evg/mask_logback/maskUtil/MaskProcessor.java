@@ -30,7 +30,7 @@ public class MaskProcessor {
 
     public String mask(Object object) {
         String jsonObject = toJson(object);
-        Map<String, Object> annotationFields = findAnnotationFields(object);
+        Map<String, Object> annotationFields = findAnnotationFields(object, new HashSet<>());
 
         try {
             JsonNode rootNode = objectMapper.readTree(jsonObject);
@@ -76,41 +76,36 @@ public class MaskProcessor {
         }
     }
 
-    private Map<String, Object> findAnnotationFields(Object object) {
+    private Map<String, Object> findAnnotationFields(Object object, Set<Integer> visited) {
         Map<String, Object> annotationFields = new HashMap<>();
 
         if (object == null) return annotationFields;
 
-        Class<?> clazz = object.getClass();
+        int identity = System.identityHashCode(object);
+        if (visited.contains(identity)) return annotationFields; // УЖЕ БЫЛ В СЕТЕ
 
-        // Пропускаем стандартные Java классы
+        visited.add(identity); // ДОБАВИЛИ
+
+        Class<?> clazz = object.getClass();
         if (clazz.getName().startsWith("java.") || clazz.isPrimitive()) {
             return annotationFields;
         }
 
-        Field[] fields = clazz.getDeclaredFields();
-
-        for (Field field : fields) {
+        for (Field field : clazz.getDeclaredFields()) {
             try {
                 field.setAccessible(true);
-                String fieldName = field.getName();
                 Object fieldValue = field.get(object);
-                log.info("Проверяем поле {}", fieldName);
+                String fieldName = field.getName();
 
                 if (field.isAnnotationPresent(MaskingField.class) && isPrimitiveAndOtherType(fieldValue)) {
                     annotationFields.put(fieldName, fieldValue == null ? "null" : fieldValue);
-                }
-                // Вложенный объект
-                else if (fieldValue != null) {
-                    // Если это коллекция, проверяем элементы
+                } else if (fieldValue != null) {
                     if (fieldValue instanceof Collection<?> collection) {
                         for (Object item : collection) {
-                            annotationFields.putAll(findAnnotationFields(item));
+                            annotationFields.putAll(findAnnotationFields(item, visited));
                         }
-                    }
-                    // Если это обычный вложенный объект
-                    else {
-                        annotationFields.putAll(findAnnotationFields(fieldValue));
+                    } else {
+                        annotationFields.putAll(findAnnotationFields(fieldValue, visited));
                     }
                 }
 
