@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import ru.evg.mask_logback.maskUtil.MaskingProcess;
-import ru.evg.mask_logback.maskUtil.aspect.MaskingAspect;
+import ru.evg.mask_logback.maskUtil.MaskProcessor;
 import ru.evg.mask_logback.model.Employee;
 import ru.evg.mask_logback.model.Passport;
 import ru.evg.mask_logback.model.Response;
@@ -30,7 +28,7 @@ import static ru.evg.mask_logback.utils.LoggerUtil.toJson;
 public class MaskingProcessTest extends SpringBootContextLoader {
 
     @Autowired
-    private MaskingProcess maskingProcess;
+    private MaskProcessor maskProcessor;
 
     @Autowired
     private JsonUtilWrapper jsonUtilWrapper;
@@ -41,13 +39,13 @@ public class MaskingProcessTest extends SpringBootContextLoader {
     @Test
     void test(){
         Response response = mockResponse(List.of(mockFirstEmployee()));
-        assertThatCode(() -> maskingProcess.maskFields(response)).doesNotThrowAnyException();
+        assertThatCode(() -> maskProcessor.maskFields(response)).doesNotThrowAnyException();
     }
 
     @Test
     void test2(){
         Response response = mockResponse(List.of(mockFirstEmployee(), mockSecondEmployee(), mockThirdEmployee()));
-        assertThatCode(() -> maskingProcess.maskFields(response)).doesNotThrowAnyException();
+        assertThatCode(() -> maskProcessor.maskFields(response)).doesNotThrowAnyException();
     }
 
     @Test

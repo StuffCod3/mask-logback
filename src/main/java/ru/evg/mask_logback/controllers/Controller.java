@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.evg.mask_logback.maskUtil.MaskProcessor;
 import ru.evg.mask_logback.model.Employee;
 import ru.evg.mask_logback.model.Passport;
 import ru.evg.mask_logback.model.Response;
@@ -16,19 +17,19 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static ru.evg.mask_logback.utils.LoggerUtil.toJson;
-
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 public class Controller {
 
     private final JsonUtilWrapper jsonUtilWrapper;
+    private final MaskProcessor mask;
 
     @GetMapping("/test")
     public Response test(){
         Response response = mockResponse(List.of(mockFirstEmployee(), mockSecondEmployee(), mockThirdEmployee()));
-        log.info("Ответ: {}", toJson(response));
+        log.info("Ответ: {}", mask.mask(response));
+
         return response;
     }
     private Response mockResponse(List<Employee> employees){

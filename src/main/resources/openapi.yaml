@@ -14,6 +14,7 @@ components:
       properties:
         id:
           type: UUID
+          x-field-extra-annotation: "@ru.evg.mask_logback.maskUtil.finder.MaskingField"
         employee:
           type: array
           items:
